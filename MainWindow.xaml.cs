@@ -104,11 +104,11 @@ namespace VectorGraphics
             int y1 = (int)start.Y;
             int x2 = (int)point.X;
             int y2 = (int)point.Y;
-            int dx = Math.Abs(x2 - x1);
-            int dy = Math.Abs(y2 - y1);
-            int d = 2 * Math.Abs(dy - dx);
+            int dx = x2 - x1;
+            int dy = y2 - y1;
+            int d = 2 * dy - dx;
             int dE = 2 * dy;
-            int dNE = 2 * Math.Abs(dy - dx);
+            int dNE = 2 * (dy - dx);
             int xf = x1;
             int yf = y1;
             int xb = x2;
@@ -127,7 +127,7 @@ namespace VectorGraphics
                 {
                     d += dNE;
                     yf += sy;
-                    yb -= sy;
+                    yb -= sx;
                 }
                 putPixel(xf, yf);
                 putPixel(xb, yb);
