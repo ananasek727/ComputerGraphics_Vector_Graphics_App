@@ -19,7 +19,10 @@
                 <RowDefinition Height="1*"></RowDefinition>
                 <RowDefinition Height="8*"></RowDefinition>
             </Grid.RowDefinitions>
-            <TextBox HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="22">Options:</TextBox>
+            <TextBox HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="22" Grid.Row="0">Options:</TextBox>
+            <Grid Grid.Row="1">
+                <ToggleButton x:Name="buttonLine" Height="50" Click="Button_Click" >Line</ToggleButton>
+            </Grid>
         </Grid>
     </Grid>
 </Window>

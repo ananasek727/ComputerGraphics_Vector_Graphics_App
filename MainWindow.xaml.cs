@@ -25,6 +25,9 @@ namespace VectorGraphics
     /// </summary>
     public partial class MainWindow : Window
     {
+        private bool firstClick = false;
+        private bool isDrawingLine = false;
+
         private bool isDrawing = false;
         private Point start;
         private int idCouter = 0;
@@ -78,8 +81,23 @@ namespace VectorGraphics
 
         private void imageControl_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            isDrawing = true;
-            start = e.GetPosition(imageControl);
+            if (!firstClick && isDrawingLine)
+            {
+                firstClick = true;
+                start = e.GetPosition(imageControl);
+                return;
+            }
+            if (firstClick && isDrawingLine)
+            {
+                drawLine(start, e.GetPosition(imageControl), bitmap);
+                imageControl.Source = bitmap;
+                firstClick = false;
+                ++idCouter;
+            }
+            if (!isDrawingLine)
+            {
+
+            }
             //idToPoints.Add(idCouter, new List<Point>());
             //idToPoints[idCouter].Add(start);
             //idToStartEnd.Add(idCouter, new List<Point>());
@@ -91,78 +109,107 @@ namespace VectorGraphics
 
         private void imageControl_MouseMove(object sender, MouseEventArgs e)
         {
+            //Animation
+            //if (isDrawing == false)
+            //    return;
+            //drawingBitmap = bitmap.Clone();
+            //drawLine(e.GetPosition(imageControl), drawingBitmap);
+            //imageControl.Source = drawingBitmap;
+
             if (isDrawing == false)
                 return;
+            
 
         }
-
-
-        // Symmetric Midpoint Line Algorithm
-        private void drawLine(Point point)
+        // wikipedia
+        private void drawLine(Point start,Point end, WriteableBitmap writeableBitmap)
         {
-            int x1 = (int)start.X;
-            int y1 = (int)start.Y;
-            int x2 = (int)point.X;
-            int y2 = (int)point.Y;
-            int dx = x2 - x1;
-            int dy = y2 - y1;
-            int d = 2 * dy - dx;
-            int dE = 2 * dy;
-            int dNE = 2 * (dy - dx);
-            int xf = x1;
-            int yf = y1;
-            int xb = x2;
-            int yb = y2;
-            int sx = x1 < x2 ? 1 : -1;
-            int sy = y1 < y2 ? 1 : -1;
-            putPixel(xf, yf);
-            putPixel(xb, yb);
-            while (xf < xb)
+            if(end == start && end.X == start.X && end.Y == start.Y)
             {
-                xf += sx;
-                xb -= sx;
-                if (d < 0)
-                    d += dE;
-                else
+                return;
+            }
+            int x0 = (int)start.X;
+            int y0 = (int)start.Y;
+            int x1 = (int)end.X;
+            int y1 = (int)end.Y;
+            int xf = x0, yf = y0;
+            int xb = x1, yb = y1;
+            int dx = Math.Abs(x1 - x0);
+            int sx = (x0 < x1) ? 1 : -1;
+            int dy = -Math.Abs(y1 - y0);
+            int sy = (y0 < y1) ? 1 : -1;
+            int error = dx + dy;
+
+            putPixel(xf, yf, writeableBitmap);
+            putPixel(xb, yb, writeableBitmap);
+            while (true)
+            {
+                putPixel(xf, yf, writeableBitmap);
+                putPixel(xb, yb, writeableBitmap);
+
+                if ((xb == xf || xb + 1 == xf || xb - 1 == xf) && (yb == yf || yb + 1 == yf || yb - 1 == yf) )
+                    break;
+
+                int e2 = 2 * error;
+
+                if (e2 >= dy)
                 {
-                    d += dNE;
-                    yf += sy;
-                    yb -= sx;
+                    if (xb == xf)
+                        break;
+
+                    error += dy;
+                    xf += sx;
+                    xb -= sx;
                 }
-                putPixel(xf, yf);
-                putPixel(xb, yb);
+
+                if (e2 <= dx)
+                {
+                    if (yb == yf)
+                        break;
+
+                    error += dx;
+                    yf += sy;
+                    yb -= sy;
+                }
             }
         }
 
-        private void putPixel(int x, int y)
+
+        private void putPixel(int x, int y, WriteableBitmap writeableBitmap)
         {
-            int width = (int)bitmap.PixelWidth;
-            int height = (int)bitmap.PixelHeight;
+            int width = (int)writeableBitmap.PixelWidth;
+            int height = (int)writeableBitmap.PixelHeight;
 
-            int stride = bitmap.PixelWidth * (bitmap.Format.BitsPerPixel / 8);
-            byte[] pixels = new byte[bitmap.PixelHeight * stride];
+            int stride = writeableBitmap.PixelWidth * (writeableBitmap.Format.BitsPerPixel / 8);
+            byte[] pixels = new byte[writeableBitmap.PixelHeight * stride];
 
-            bitmap.CopyPixels(new Int32Rect(0, 0, width, height), pixels, stride, 0);
+            writeableBitmap.CopyPixels(new Int32Rect(0, 0, width, height), pixels, stride, 0);
 
-            int offset = y * stride + x * (bitmap.Format.BitsPerPixel / 8);
+            int offset = y * stride + x * (writeableBitmap.Format.BitsPerPixel / 8);
 
             pixels[offset] = 0;     // Blue component
             pixels[offset + 1] = 0; // Green component
             pixels[offset + 2] = 0; // Red component
             pixels[offset + 3] = 255; // Alpha component (fully opaque)
 
-            bitmap.WritePixels(new Int32Rect(0, 0, width, height), pixels, stride, 0);
+            writeableBitmap.WritePixels(new Int32Rect(0, 0, width, height), pixels, stride, 0);
         }
 
         private void imageControl_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             //drawingBitmap = bitmap;
-            drawLine(e.GetPosition(imageControl));
+
             //imageControl.Source = drawingBitmap;
-            
-            isDrawing = false;
-            imageControl.UpdateLayout();
+            //drawLine(start, e.GetPosition(imageControl), bitmap);
+            //isDrawing = false;
+            //imageControl.UpdateLayout();
             //++idCouter;
         }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            isDrawingLine = !isDrawingLine;
+        }
+
     }
 }
